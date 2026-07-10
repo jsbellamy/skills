@@ -31,9 +31,22 @@ Spawn a background subagent with `subagent_type: "claude"`, `model: "sonnet"`. C
 
 When an implementer reports back: `gh pr checks <N>` green; `gh pr view <N> --json mergeable,mergeStateStatus,files` — the file set must match the issue's scope. Chase any file outside scope down to its diff before accepting (a required-field update to an existing test literal is fine; core changes in a content-only issue are not). An implementer claiming success is a claim; the checks are the verification.
 
+Acceptance criteria are a separate, required verification gate. Re-read the live
+issue and make an independent checklist containing every acceptance criterion.
+Require the implementer to include the same checklist in the PR body and final
+report, with concrete evidence per row: test names, code/diff locations,
+command output, or a named manual native-app observation. Independently inspect
+the implementation and tests at the seams each criterion names. Green CI, a
+passing test suite, and a scope-matching file list prove only those facts; they
+never prove omitted or visual/integration requirements. For a UI/native/manual
+criterion, run the stated manual check or require a precise recorded result;
+do not accept an unperformed manual check or a unit test as a substitute. Any
+missing, contradicted, untested-at-the-right-seam, or merely asserted row sends
+the PR back to the original implementer for rework.
+
 ### 4. Gate
 
-Merges need user approval. Ask per-PR, or accept a blanket "merge as they go green" for the wave — but a blanket approval covers merging only, not fixes to `main` or scope deviations, which go back to the user.
+Merges need user approval. Ask per-PR, or accept a blanket "merge as they go green" for the wave — but a blanket approval covers merging only after the acceptance-criteria gate is complete, not fixes to `main` or scope deviations, which go back to the user. Never merge a PR whose `Closes #<N>` reference would close an issue with an unmet or unverified acceptance criterion.
 
 ### 5. Merge
 
