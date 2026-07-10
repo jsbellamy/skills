@@ -24,6 +24,8 @@ Draft the wave: one slice per issue, and for each slice its deltas across every 
 - **Semantic conflicts** — slices that collide through behavior even with disjoint files (one slice's mechanic changes another's test conditions, shared fixtures, event timing).
 - **Open decisions** — every choice the design doesn't force.
 
+When a slice can't be behavior-complete on its own, give it a neutral **interim** — equivalent to today's behavior, labeled interim in the body — that a named later slice explicitly replaces. Every slice merges green and the replacement seam is planned, not discovered.
+
 Use a Plan agent for a large wave; design inline for a small one. Done when every slice has a delta list and every decision is named.
 
 ### 3. Grill
@@ -39,8 +41,9 @@ Write each issue body: `## What to build` / `## Acceptance criteria` / `## Block
 - Standing constraints restated in-body where they bind: append-only arrays, save-compat defaults, event-vocabulary rules — with the *why*, so the agent doesn't "improve" them away.
 - One acceptance criterion per pinned decision — each user answer from the grill becomes a checkable test.
 - Tuning values labeled as tuning, not spec.
+- `## Blocked by` carries the dispatch notes too: which issues this one must never run concurrently with, and why (the shared files / semantic conflicts from step 2). The orchestrator reads issues, not this conversation — concurrency constraints that live only in the closing report are invisible at dispatch time.
 
-Done when each body would survive being handed to an agent with zero conversation context.
+Done when each body, reread cold as the implementing agent, has no open question — and no drafting residue: a sentence still arguing with itself is a decision that didn't get made.
 
 ### 5. Publish
 
@@ -50,8 +53,8 @@ Create issues in dependency order (blockers first, so edges reference real numbe
 gh api repos/<owner>/<repo>/issues/<N>/dependencies/blocked_by -F issue_id=<blocker's global REST id>
 ```
 
-(The REST id comes from `gh api repos/<owner>/<repo>/issues/<M> -q .id`.) Then sweep existing open issues the wave invalidates: rewrite bodies overtaken by new mechanics, comment sequencing warnings on issues that now conflict with a wave slice.
+(The REST id comes from `gh api repos/<owner>/<repo>/issues/<M> -q .id`. The `-F` flag is load-bearing: `issue_id` must arrive as a typed integer — `-f` sends a string and the API 422s.) Then sweep existing open issues in both directions: rewrite bodies the wave's mechanics overtake, comment sequencing warnings on issues that now conflict with a slice, and when a wave decision pins tuning or intent on an *already-filed* issue, comment it there — a decision recorded only in conversation dies with the conversation.
 
 ### 6. Record
 
-Verify: issue list shows the wave with correct labels; spot-check edges via the `dependencies/blocked_by` endpoint; `git status --porcelain` is empty (the tree was never touched). Close with a report the orchestrator can execute from: issue numbers and titles, the dependency graph, and a **dispatch order** — which issues are parallel-safe, which are strictly serialized, and why (name the shared files and semantic conflicts from step 2).
+Verify: issue list shows the wave with correct labels; spot-check edges via the `dependencies/blocked_by` endpoint; `git status --porcelain` is empty (the tree was never touched). Close with a report the orchestrator can execute from: issue numbers and titles, the dependency graph, and a **dispatch order** — which issues are parallel-safe, which are strictly serialized (summarizing the in-body dispatch notes, which remain the source of truth).
