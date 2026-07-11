@@ -50,13 +50,21 @@ Merges need user approval. Ask per-PR, or accept a blanket "merge as they go gre
 
 ### 5. Merge
 
-Squash-merge **from inside the repo directory in a single command** — the shell cwd resets between calls, and `gh pr merge` from elsewhere can silently no-op:
+Remove the issue's worktree *before* merging — verification is already done by this point, so the worktree is no longer needed, and `--delete-branch` cannot delete a branch that's still checked out somewhere:
+
+```
+git worktree remove <repo>-wt-<N>
+```
+
+Then squash-merge **from inside the repo directory in a single command** — the shell cwd resets between calls, and `gh pr merge` from elsewhere can silently no-op:
 
 ```
 cd <repo> && gh pr merge <N> --squash --delete-branch
 ```
 
-Confirm `state: MERGED` afterwards. A branch-delete failure naming the worktree is benign (the remote branch is gone); then remove the worktree, pull `main`, run the full suite locally, and wait for the **post-merge CI run on `main`** to pass before dispatching anything on top. Two individually-green PRs can auto-merge into a broken `main` — git happily combines non-overlapping hunks into duplicate code with no conflict.
+Confirm `state: MERGED` afterwards, then pull `main`, run the full suite locally, and wait for the **post-merge CI run on `main`** to pass before dispatching anything on top. Two individually-green PRs can auto-merge into a broken `main` — git happily combines non-overlapping hunks into duplicate code with no conflict.
+
+If the worktree removal step above was skipped and `--delete-branch` fails naming the worktree, that's benign (the remote branch is still gone) — just remove the worktree and `git branch -D` the local ref afterward.
 
 ### 6. Break glass
 
