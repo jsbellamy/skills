@@ -10,6 +10,6 @@ Use /tdd where possible, at pre-agreed seams.
 
 Run typechecking regularly, single test files regularly, and the full test suite once at the end.
 
-Once done, use /code-review to review the work.
+Once done, use /code-review to review the work. On Cursor, its two parallel review subagents must run Composer 2.5 non-fast (`composer-2.5[fast=false]`).
 
 Commit your work to the current branch.

@@ -57,7 +57,11 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 
 ### 4. Spawn both sub-agents in parallel
 
-Send a single message with two `Agent` tool calls. Use the `general-purpose` subagent for both.
+Detect the host runtime once (Cursor vs Claude Code).
+
+Send a single message with two parallel sub-agent spawns on the general-purpose coding subagent (`generalPurpose` in Cursor; `general-purpose` in Claude Code).
+
+On **Cursor**, pass `model: "composer-2.5[fast=false]"` on both spawns — never `composer-2.5-fast` or plain `composer-2.5` (the backend may upgrade to fast).
 
 **Standards sub-agent prompt** — include:
 
