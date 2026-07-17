@@ -59,7 +59,24 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 - **Middle Man** — a class or function that mostly just delegates onward. → cut it, call the real target direct.
 - **Refused Bequest** — a subclass or implementer that ignores or overrides most of what it inherits. → drop the inheritance, use composition.
 
-### 4. Spawn both sub-agents in parallel
+### 4. Build the visual reference set for asset changes
+
+Inspect asset diffs for a visual delta first. For a mechanical recompression, atlas repack, or export-only change, compare the rendered pixels with the fixed-point version. If they are visually identical, record pixel equivalence and leave identity/style review to any separate visually changed assets; Standards still enforces documented pipeline rules. Activate this branch for every remaining generated or authored raster, sprite, sprite sheet, or other visual game asset whose rendered appearance is new or changed, including visually authored output in an asset slice. The asset guard belongs to **Spec**: it asks whether the delivered visual is the intended thing.
+
+Build a **visual reference set** before spawning reviewers:
+
+- The changed asset rendered from `HEAD` at inspectable resolution.
+- The original sample or generation reference named by the spec, issue, attachments, or repository. This is the identity reference.
+- Two to five closest existing assets from the same family, atlas, role, or rendered context. This is the style cohort; choose by visual role, not merely filename proximity. If fewer exist, use all of them and say so.
+
+The Spec reviewer must inspect the actual images, not infer their appearance from filenames, prompts, metadata, or binary diffs. For every changed asset, require a verdict table with:
+
+- **Style alignment — pass / fail / unverified.** Compare silhouette language, proportions and scale, outline treatment, palette and contrast, shading and lighting, texture, perspective, and detail density against the style cohort, using only dimensions relevant to that asset.
+- **Identity continuity — pass / fail / unverified.** Compare the defining silhouette, features, proportions, costume or props, markings, and dominant/accent colors against the original sample. A difference explicitly required by the spec is not drift.
+
+Each verdict names its references and cites concrete visual matches or mismatches. A missing identity reference, an unavailable asset, or a reviewer unable to inspect the pixels produces `unverified`, never an assumed pass. Every `fail` or `unverified` row is a Spec finding.
+
+### 5. Spawn both sub-agents in parallel
 
 Detect the host runtime once (Cursor vs Claude Code).
 
@@ -77,11 +94,12 @@ On **Cursor**, pass `model: "composer-2.5[fast=false]"` on both spawns — never
 
 - The diff command and commit list.
 - The path or fetched contents of the spec.
-- The brief: "Report: (a) requirements the spec asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong. Quote the spec line for each finding. Under 400 words."
+- For assets that activate the visual-fidelity branch, the visual reference set from step 4 and the requirement to inspect each image and return the Style alignment / Identity continuity verdict table before reporting findings. A mechanical-only, pixel-equivalent diff carries its equivalence evidence instead and requires no original-sample/cohort verdicts.
+- The brief: "Report: (a) requirements the spec asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong; and, for assets in the visual-fidelity branch, (d) every failed or unverified verdict row. Quote the spec line for each non-visual finding; for visual findings, name the changed asset and references and cite concrete visible evidence. Under 400 words, excluding the required asset verdict table."
 
-If the spec is missing, skip the Spec sub-agent and note this in the final report.
+If the spec is missing and no asset activates the visual-fidelity branch, skip the Spec sub-agent and note this in the final report. A pixel-equivalent mechanical-only diff does not activate the branch. Visually changed assets never skip the Spec sub-agent: missing original samples or inaccessible pixels are `unverified` visual-fidelity findings.
 
-### 5. Aggregate
+### 6. Aggregate
 
 Present the two reports under `## Standards` and `## Spec` headings, verbatim or lightly cleaned. Do **not** merge or rerank findings — the two axes are deliberately separate (see _Why two axes_).
 

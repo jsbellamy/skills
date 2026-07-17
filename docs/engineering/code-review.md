@@ -22,13 +22,17 @@ Reach for this when there is a diff to judge against a known-good point and you 
 
 ## Prerequisites
 
-The **Spec** axis needs somewhere to find the originating spec — an issue reference in the commit messages, a path you pass in, or a spec under `docs/`/`specs/`. That issue-tracker wiring comes from [setup-matt-pocock-skills](https://aihero.dev/skills-setup-matt-pocock-skills); without a spec the Spec axis simply skips and says so. The **Standards** axis needs nothing set up — it always carries a built-in Fowler smell baseline even in a repo that documents no conventions.
+The **Spec** axis needs somewhere to find the originating spec — an issue reference in the commit messages, a path you pass in, or a spec under `docs/`/`specs/`. That issue-tracker wiring comes from [setup-matt-pocock-skills](https://aihero.dev/skills-setup-matt-pocock-skills); without a spec, a non-asset review skips that axis and says so. The **Standards** axis needs nothing set up — it always carries a built-in Fowler smell baseline even in a repo that documents no conventions.
+
+Generated or visually modified assets also need their original sample and a small cohort of nearby assets that represent the existing style. Asset review does not skip when one is missing; it reports that comparison as unverified. Pipeline-only changes with identical rendered pixels record that equivalence instead of inventing an identity comparison.
 
 ## Two axes, never merged
 
 The defining idea is the **two axes**. **Standards** asks whether the diff conforms to the repo's instructions and conventions — its `AGENTS.md`, `CLAUDE.md`, `CODING_STANDARDS.md`, or `CONTRIBUTING.md`, plus a fixed baseline of ~12 Fowler code smells (Mysterious Name, Duplicated Code, Feature Envy, Data Clumps, …). Two rules keep the baseline safe: a documented repo standard always overrides it, and every smell is a judgement call, never a hard violation. **Spec** asks the orthogonal question — does the code do what the issue or spec actually asked, without missing requirements or smuggling in scope creep?
 
 Standards also builds a **companion-artifact checklist** from the instructions and the changed behavior. It checks required docs, indexes, manifests, generated files, changelogs, and similar synchronized surfaces even when they are missing from the diff, then compares existing companion docs semantically rather than treating a touched filename as proof that it is current. Missing or stale required companions are hard Standards violations.
+
+For sprites and other visual assets, Spec builds a **visual reference set**: the changed image, its original sample, and two to five existing assets from the same visual family. The reviewer inspects the actual pixels and gives separate pass/fail/unverified verdicts for **style alignment** and **identity continuity**. Style covers the visual grammar shared with nearby assets; identity covers the sample's defining silhouette, features, proportions, props, markings, and colors. Missing references or inaccessible pixels are findings, not assumed passes.
 
 They run as parallel sub-agents so neither pollutes the other's context, and the final report presents them under separate `## Standards` and `## Spec` headings with a per-axis summary. There is deliberately no single winner across axes. On Cursor, both review subagents pin Composer 2.5 non-fast (`composer-2.5[fast=false]`).
 
@@ -37,7 +41,8 @@ They run as parallel sub-agents so neither pollutes the other's context, and the
 - It pins and confirms the fixed point first (`git rev-parse`), failing fast on a bad ref or empty diff rather than inside the sub-agents.
 - Standards and Spec findings arrive in two distinct blocks, each citing its source — a repo standard or baseline smell for one, a quoted spec line for the other.
 - Every changed behavior is checked against applicable companion-artifact rules, including required files absent from the diff.
-- When no spec can be found, the Spec axis reports "no spec available" instead of inventing requirements.
+- Every generated or visually modified asset has evidence-backed Style alignment and Identity continuity verdicts against named references; pixel-equivalent mechanical changes are identified explicitly.
+- For changes without visual-fidelity assets, a missing spec is reported instead of invented; visually changed assets still receive visual review and mark missing references unverified.
 
 ## Where it fits
 
