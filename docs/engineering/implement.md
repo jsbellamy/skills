@@ -12,7 +12,7 @@ npx skills update implement
 
 ## What it does
 
-`implement` builds the work described in a spec or a set of tickets — driving it through test-driven development, typechecking, and the full test suite, then handing off to review and committing to the current branch.
+`implement` builds the work described in a spec or a set of tickets — driving it through test-driven development, typechecking, the full test suite, and the repo's required companion artifacts before handing off to review and committing to the current branch.
 
 It does **not** decide what to build. The spec is already settled and the seams are already agreed; `implement` executes that plan rather than reopening it. It is the hands, not the head — the thinking happened upstream.
 
@@ -26,7 +26,9 @@ Reach for it once the work is written down as a spec or split into tickets and y
 
 The idea `implement` runs on is the **seam** — the stable interface a feature is tested at, chosen before any code is written. It doesn't invent seams mid-build; it uses the ones already picked (during [to-spec](https://aihero.dev/skills-to-spec)) and writes tests against them via [tdd](https://aihero.dev/skills-tdd). Working at pre-agreed seams is what keeps the implementation honest: the tests target something durable, so the code underneath can move without the tests moving.
 
-Around that core it keeps the loop tight — typecheck often, run single test files as it goes, run the whole suite once at the end — then closes out with a [code-review](https://aihero.dev/skills-code-review) pass (on Cursor, its two parallel review subagents run Composer 2.5 non-fast) and a commit to the current branch.
+Around that core it keeps the loop tight. Before editing, it reads the repo instructions and builds a **companion-artifact checklist** for required docs, indexes, manifests, generated files, changelogs, and other synchronized surfaces. It typechecks often, runs single test files as it goes, runs the whole suite once at the end, and verifies each companion's meaning against the implemented behavior before closing out with a [code-review](https://aihero.dev/skills-code-review) pass (on Cursor, its two parallel review subagents run Composer 2.5 non-fast) and a commit to the current branch.
+
+The implementation is not complete while any required companion is missing or stale. Touching a documentation filename is not enough; its content has to describe the behavior that was actually built.
 
 ## Where it fits
 

@@ -41,7 +41,7 @@ cd ../<repo-basename>-wt-<N> && npm install
 
 Spawn a background implementer on the runtime's general-purpose coding subagent (`generalPurpose` in Cursor; `claude` in Claude Code). Pin the model from the runtime × slice table above. For `asset`, require image generation for new rasters.
 
-Custom agent types from `.claude/agents/` only register at session start — inline the implementer process into the prompt instead (source it from the repo's `.claude/agents/issue-implementer.md` if present). The prompt must pin: the worktree path as the only working directory; fetch the issue with `gh issue view <N>` and treat its acceptance criteria as the definition of done; branch `issue-<N>-<slug>`; test-first; hooks must pass (never `--no-verify`); push and open a PR with `Closes #<N>`; never merge. Include a one-paragraph issue summary but mark the live issue body as authoritative. If a sibling issue already merged into a shared surface this one also touches (a UI panel, a module), say so explicitly — the issue text's description of that surface may predate the merge; the current file state is authoritative there, not the issue body.
+Custom agent types from `.claude/agents/` only register at session start — inline the implementer process into the prompt instead (source it from the repo's `.claude/agents/issue-implementer.md` if present). The prompt must pin: the worktree path as the only working directory; fetch the issue with `gh issue view <N>` and treat its acceptance criteria as the definition of done; branch `issue-<N>-<slug>`; test-first; hooks must pass (never `--no-verify`); push and open a PR with `Closes #<N>`; never merge. Require the implementer to read the repo's instruction files and their applicable references before editing, build a companion-artifact checklist for required documentation, indexes, manifests, generated files, changelogs, and other synchronized surfaces, complete it before opening the PR, and include concrete evidence for every row in the PR body and final report. Include a one-paragraph issue summary but mark the live issue body as authoritative. If a sibling issue already merged into a shared surface this one also touches (a UI panel, a module), say so explicitly — the issue text's description of that surface may predate the merge; the current file state is authoritative there, not the issue body.
 
 ### 3. Verify
 
@@ -59,6 +59,8 @@ criterion, run the stated manual check or require a precise recorded result;
 do not accept an unperformed manual check or a unit test as a substitute. Any
 missing, contradicted, untested-at-the-right-seam, or merely asserted row sends
 the PR back to the original implementer for rework.
+
+Independently verify the implementer's companion-artifact checklist against the repo's instruction files. Missing checklist rows, required companions absent from the diff, and companion documents whose meaning is stale all send the PR back for rework before Review.
 
 ### 4. Review
 

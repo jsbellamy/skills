@@ -26,7 +26,9 @@ The **Spec** axis needs somewhere to find the originating spec — an issue refe
 
 ## Two axes, never merged
 
-The defining idea is the **two axes**. **Standards** asks whether the diff conforms to how this repo writes code — its `CODING_STANDARDS.md` or `CONTRIBUTING.md`, plus a fixed baseline of ~12 Fowler code smells (Mysterious Name, Duplicated Code, Feature Envy, Data Clumps, …). Two rules keep the baseline safe: a documented repo standard always overrides it, and every smell is a judgement call, never a hard violation. **Spec** asks the orthogonal question — does the code do what the issue or spec actually asked, without missing requirements or smuggling in scope creep?
+The defining idea is the **two axes**. **Standards** asks whether the diff conforms to the repo's instructions and conventions — its `AGENTS.md`, `CLAUDE.md`, `CODING_STANDARDS.md`, or `CONTRIBUTING.md`, plus a fixed baseline of ~12 Fowler code smells (Mysterious Name, Duplicated Code, Feature Envy, Data Clumps, …). Two rules keep the baseline safe: a documented repo standard always overrides it, and every smell is a judgement call, never a hard violation. **Spec** asks the orthogonal question — does the code do what the issue or spec actually asked, without missing requirements or smuggling in scope creep?
+
+Standards also builds a **companion-artifact checklist** from the instructions and the changed behavior. It checks required docs, indexes, manifests, generated files, changelogs, and similar synchronized surfaces even when they are missing from the diff, then compares existing companion docs semantically rather than treating a touched filename as proof that it is current. Missing or stale required companions are hard Standards violations.
 
 They run as parallel sub-agents so neither pollutes the other's context, and the final report presents them under separate `## Standards` and `## Spec` headings with a per-axis summary. There is deliberately no single winner across axes. On Cursor, both review subagents pin Composer 2.5 non-fast (`composer-2.5[fast=false]`).
 
@@ -34,6 +36,7 @@ They run as parallel sub-agents so neither pollutes the other's context, and the
 
 - It pins and confirms the fixed point first (`git rev-parse`), failing fast on a bad ref or empty diff rather than inside the sub-agents.
 - Standards and Spec findings arrive in two distinct blocks, each citing its source — a repo standard or baseline smell for one, a quoted spec line for the other.
+- Every changed behavior is checked against applicable companion-artifact rules, including required files absent from the diff.
 - When no spec can be found, the Spec axis reports "no spec available" instead of inventing requirements.
 
 ## Where it fits
