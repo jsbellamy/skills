@@ -1,0 +1,4 @@
+interface:
+  display_name: "Idea to Wave"
+  short_description: "Turn a product idea into an agent-ready issue wave"
+  default_prompt: "Use $idea-to-wave to shape this high-level idea and file an approved wave of agent-ready issues."

@@ -1,7 +1,6 @@
 ---
 name: plan-wave
 description: Plan a wave of features and file them as fully-specified, agent-ready issues with dependency edges and a dispatch order.
-disable-model-invocation: true
 ---
 
 # Plan a Wave
