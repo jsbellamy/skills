@@ -31,15 +31,21 @@ Prefer splitting mixed work into two issues (code blocked by asset, or the rever
 
 When a slice can't be behavior-complete on its own, give it a neutral **interim** — equivalent to today's behavior, labeled interim in the body — that a named later slice explicitly replaces. Every slice merges green and the replacement seam is planned, not discovered.
 
-Use a Plan agent for a large wave; design inline for a small one. Done when every slice has a delta list, a slice type, a file manifest, and every decision is named.
+**Size every slice to a single fresh worker context window.** The manifest is the instrument: a write set past ~6–8 files, or a `read` set that won't hold to a tight named list, marks the slice oversized — split it before Spec, taking the first seam that fits:
+
+1. **Interim seam** — the mechanism above: behavior-incomplete halves joined by a labeled interim.
+2. **Layer seam** — when the manifest partitions naturally (core + data first, UI wiring second); the later slice's `read` set names the earlier slice's merged files.
+3. **Expand–contract** — for a wide refactor whose blast radius fans across the codebase: an *expand* slice adds the new form beside the old; *migrate* slices convert call sites in batches sized by blast radius (each blocked by the expand); a *contract* slice deletes the old form, blocked by every migrate batch. Each merges green because the old form survives until contract.
+
+Use a Plan agent for a large wave; design inline for a small one. Done when every slice has a delta list, a slice type, a file manifest within the size ceiling, and every decision is named.
 
 ### 3. Grill
 
-Run `/grill-me` on the draft. Facts get looked up in the codebase; decisions go to the user one at a time, each with your recommended answer. The user's answers are final — record their exact words where wording matters (pricing formulas, thresholds, behavioral rules). Done when the user confirms shared understanding, and only then.
+Run `/grill-me` on the draft. Facts get looked up in the codebase; decisions go to the user one at a time, each with your recommended answer. A slice sitting near the size ceiling is a decision: present the candidate seams with your recommended split (or the case for keeping it whole). The user's answers are final — record their exact words where wording matters (pricing formulas, thresholds, behavioral rules). Done when the user confirms shared understanding, and only then.
 
 ### 4. Spec
 
-Write each issue body: `## Slice type` / `## What to build` / `## Touches` / `## Acceptance criteria` / `## Blocked by`. This spec style is deliberately concrete (unlike `/to-issues`, which avoids code in bodies — a wave issue is the implementing agent's only context):
+Write each issue body: `## Slice type` / `## What to build` / `## Touches` / `## Acceptance criteria` / `## Blocked by`. This spec style is deliberately concrete (unlike `/to-tickets`, which avoids code in bodies — a wave issue is the implementing agent's only context):
 
 - `## Slice type` is mandatory and machine-readable for `/orchestrate-wave`: a single line that is exactly `code` or exactly `asset`. No synonyms, no prose on that line.
 - `## Touches` is mandatory: the slice's file manifest, one line per file as `modify:` / `create:` / `read:` with an exact repo-relative path and a short why. Every `modify`/`read` path exists in the codebase at planning time (Ground verified it); `create` paths follow an existing directory convention; name a directory only when the whole directory is genuinely in scope. A nonexistent path is a spec bug, same as a wrong type name. The `read` lines are the implementer's context set — the files to read before editing, replacing open-ended exploration. The manifest is expected scope, not a straitjacket: state in-body that deviations are allowed but each out-of-manifest file must be justified in the PR body.
