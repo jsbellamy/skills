@@ -19,7 +19,7 @@ Every wave issue must declare **`## Slice type`** with exactly one of `code` or 
 | Slice | Cursor | Claude Code |
 | ----- | ------ | ----------- |
 | **code slice** (`code`) | Composer 2.5 (`composer-2.5`, never fast) | Sonnet (`sonnet`, reasoning ≤ high) |
-| **asset slice** (`asset`) | Grok 4.5 high (`cursor-grok-4.5-high`) | Grok 4.5 high if available; otherwise ask before dispatching |
+| **asset slice** (`asset`) | Grok 4.5 medium (`cursor-grok-4.5-medium`) | Grok 4.5 medium if available; otherwise ask before dispatching |
 
 Asset implementers must have image generation and follow the repo's asset pipeline when one exists. For visually authored output, they receive a visual reference set and preserve the original sample's identity while matching the existing cohort's style. Never spawn Fable or above. Never invent a slice type: if `## Slice type` is missing or not exactly `code` / `asset`, stop and ask — do not dispatch.
 
