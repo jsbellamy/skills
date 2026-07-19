@@ -87,7 +87,7 @@ On **Cursor**, pass `model: "composer-2.5[fast=false]"` on both spawns — never
 **Standards sub-agent prompt** — include:
 
 - The full diff command and commit list.
-- The list of standards-source files and the companion-artifact checklist from step 3, **plus the smell baseline from step 3** pasted in full — the sub-agent has no other access to it.
+- The list of standards-source files and the companion-artifact checklist from step 3, **plus the smell baseline from step 3** pasted in full — the sub-agent has no other access to it. The standards-source list is mandatory in the prompt: when step 3 found nothing, write "no documented standards found" there, so a baseline-only review is always an explicit, reported condition rather than a silent default.
 - The brief: "Report (a) every place the diff violates a documented standard, including every missing or stale companion artifact: cite the standard (file + rule) and the triggering change when the required artifact has no hunk; and (b) any baseline smell you spot: name it and quote the hunk. Verify companion documents semantically, not by filename presence. Distinguish hard violations from judgement calls — documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything tooling enforces. Under 400 words."
 
 **Spec sub-agent prompt** — include:

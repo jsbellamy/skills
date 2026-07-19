@@ -40,7 +40,7 @@ Use a Plan agent for a large wave; design inline for a small one. Done when ever
 
 ### 3. Grill
 
-Run `/grill-me` on the draft. Facts get looked up in the codebase; decisions go to the user one at a time, each with your recommended answer. A slice sitting near the size ceiling is a decision: present the candidate seams with your recommended split (or the case for keeping it whole). The user's answers are final — record their exact words where wording matters (pricing formulas, thresholds, behavioral rules). Done when the user confirms shared understanding, and only then.
+Run a `/grilling` session on the draft, using the `/domain-modeling` skill to capture docs (ADRs and glossary) as you go. Facts get looked up in the codebase; decisions go to the user one at a time, each with your recommended answer. A slice sitting near the size ceiling is a decision: present the candidate seams with your recommended split (or the case for keeping it whole). The user's answers are final — record their exact words where wording matters (pricing formulas, thresholds, behavioral rules). Done when the user confirms shared understanding, and only then.
 
 ### 4. Spec
 
