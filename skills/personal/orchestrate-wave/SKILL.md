@@ -1,12 +1,12 @@
 ---
 name: orchestrate-wave
-description: Orchestrate implementation of a wave of agent-ready issues — dispatch implementer subagents in worktrees, verify PRs, run /code-review, merge with approval.
+description: Orchestrate implementation of a wave of agent-ready issues — dispatch implementer subagents in worktrees, verify PRs, audit their /code-review verdicts, merge with approval.
 disable-model-invocation: true
 ---
 
 # Orchestrate a Wave
 
-Drive a **wave** of agent-ready GitHub issues from open to merged. You are the orchestrator: you dispatch implementer subagents into isolated worktrees, verify their PRs, run `/code-review`, and merge — you never implement issues yourself, and implementers never merge. This session owns the repo's working tree and all merges; a concurrent `/plan-wave` session writes only to the issue tracker, so both can run at once.
+Drive a **wave** of agent-ready GitHub issues from open to merged. You are the orchestrator: you dispatch implementer subagents into isolated worktrees, verify their PRs, audit the `/code-review` verdicts they publish, and merge — you never implement or review diffs yourself, and implementers never merge. This session owns the repo's working tree and all merges; a concurrent `/plan-wave` session writes only to the issue tracker, so both can run at once.
 
 ## Cursor shell
 
@@ -41,7 +41,7 @@ cd ../<repo-basename>-wt-<N> && npm install
 
 Spawn a background implementer on the runtime's general-purpose coding subagent (`generalPurpose` in Cursor; `claude` in Claude Code). Pin the model from the runtime × slice table above. For `asset`, require image generation for new rasters.
 
-Custom agent types from `.claude/agents/` only register at session start — inline the implementer process into the prompt instead (source it from the repo's `.claude/agents/issue-implementer.md` if present). The prompt must pin: the worktree path as the only working directory; fetch the issue with `gh issue view <N>` and treat its acceptance criteria as the definition of done; read every `## Touches` `read` file before editing and treat the manifest as expected scope — verify manifest paths against the current tree first (a sibling merge may have moved them), and justify any out-of-manifest file in the PR body; branch `issue-<N>-<slug>`; test-first; hooks must pass (never `--no-verify`); push and open a PR with `Closes #<N>`; never merge. Require the implementer to read the repo's instruction files and their applicable references before editing, build a companion-artifact checklist for required documentation, indexes, manifests, generated files, changelogs, and other synchronized surfaces, complete it before opening the PR, and include concrete evidence for every row in the PR body and final report. For a visually authored asset slice, the prompt also names the visual reference set and requires the final report to identify the original sample, style cohort, and concrete identity/style choices preserved in the delivered asset. For a mechanical-only asset slice, require rendered-pixel-equivalence evidence instead. Include a one-paragraph issue summary but mark the live issue body as authoritative. If a sibling issue already merged into a shared surface this one also touches (a UI panel, a module), say so explicitly — the issue text's description of that surface may predate the merge; the current file state is authoritative there, not the issue body.
+Custom agent types from `.claude/agents/` only register at session start — inline the implementer process into the prompt instead (source it from the repo's `.claude/agents/issue-implementer.md` if present). The prompt must pin: the worktree path as the only working directory; fetch the issue with `gh issue view <N>` and treat its acceptance criteria as the definition of done; read every `## Touches` `read` file before editing and treat the manifest as expected scope — verify manifest paths against the current tree first (a sibling merge may have moved them), and justify any out-of-manifest file in the PR body; branch `issue-<N>-<slug>`; test-first; hooks must pass (never `--no-verify`); run `/code-review` on its own branch before publishing and rework every Spec finding, `unmet` criterion row, and hard Standards violation; push and open a PR with `Closes #<N>`; post the verbatim Standards and Spec output as a PR comment and return a verdict table rather than the reports themselves — pasting what the reviewers wrote, never a summary of its own review; never merge. On Cursor, its review subagents must run Composer 2.5 non-fast (`composer-2.5`, never fast) whatever the slice type; on Claude Code, the general-purpose subagent the `code-review` skill names. Require the implementer to read the repo's instruction files and their applicable references before editing, build a companion-artifact checklist for required documentation, indexes, manifests, generated files, changelogs, and other synchronized surfaces, complete it before opening the PR, and include concrete evidence for every row in the PR body and final report. For a visually authored asset slice, the prompt also names the visual reference set and requires the final report to identify the original sample, style cohort, and concrete identity/style choices preserved in the delivered asset. For a mechanical-only asset slice, require rendered-pixel-equivalence evidence instead. Include a one-paragraph issue summary but mark the live issue body as authoritative. If a sibling issue already merged into a shared surface this one also touches (a UI panel, a module), say so explicitly — the issue text's description of that surface may predate the merge; the current file state is authoritative there, not the issue body.
 
 ### 3. Verify
 
@@ -50,7 +50,7 @@ When an implementer reports back: `gh pr checks <N>` green; `gh pr view <N> --js
 Verify is a **claims audit**, not a code read — the one deep read of the diff
 belongs to Review, and the orchestrator keeps verdicts in context, not diffs.
 Re-read the live issue and build an independent checklist containing every
-acceptance criterion; this checklist is handed to Review. Require the
+acceptance criterion; Review audits the implementer's verdict table against it. Require the
 implementer to include the same checklist in the PR body and final report, with
 concrete evidence per row: test names, code/diff locations, command output, or
 a named manual native-app observation. A missing or evidence-free row sends the
@@ -64,21 +64,25 @@ For an asset slice, confirm the referenced artifacts exist and are reachable: th
 
 ### 4. Review
 
-After Verify passes, the **orchestrator** runs `/code-review` on the PR branch — not the implementer. Fixed point is `main` (`git diff main...HEAD`); Spec source is the live issue body (already fetched for Verify). Follow the `code-review` skill: Standards and Spec as parallel sub-agents, reports kept under separate headings. Review owns the deep read that Verify deliberately skipped:
+The **implementer** runs `/code-review` on its own branch before opening the PR, reworks its findings, and posts the verbatim reports as a **PR comment** — the deep read happens there, inside the worktree where the context is already hot, and rework lands before the PR ever reaches you. What the implementer returns to this session is a **verdict table**, not the reports.
 
-- **Pass the acceptance-criteria checklist into `/code-review`.** The Spec reviewer inspects the implementation and tests at the seams each criterion names and returns a per-criterion verdict table — `met` / `unmet` / `needs manual` — with an evidence pointer per row (same shape as the asset verdict table). Every `unmet` row is a blocking Spec finding. A `needs manual` row (a UI/native observation a sub-agent cannot drive) routes to the orchestrator: run the stated manual check or require a precise recorded result, and record it on the checklist before Gate — an unperformed manual check or a unit test is not a substitute.
-- **Pass the companion-artifact checklist to the Standards reviewer**, which judges whether each present companion's meaning is stale against the diff.
-- For a visually authored asset slice, pass the slice type and verified visual reference set; the Spec reviewer must return the per-asset Style alignment / Identity continuity verdict table, and every `fail` or `unverified` row is a blocking Spec finding. For a mechanical-only asset slice, pass the pixel-equivalence evidence instead; the Spec reviewer verifies equivalence, and a visual difference reclassifies the slice as visually authored, requiring the reference set.
+Storage and readership are deliberately split: the reports live in the PR, where they survive compaction and you can read them without asking an agent; the orchestrator holds one table per issue across the whole wave. Audit the table against the checklists you built in Verify, and fetch the comment (`gh pr view <N> --comments`) only when a verdict is non-clean:
 
-On Cursor, both review subagents must run Composer 2.5 non-fast (`composer-2.5`, never fast) — same pin as `/implement`. On Claude Code, use the same general-purpose subagent the `code-review` skill names. Run Review for every slice type; asset PRs still get Spec against the issue (Standards may be empty when the diff is mostly binaries).
+- **Every acceptance criterion has a verdict row** — `met` / `unmet` / `needs manual` — with an evidence pointer. A missing row, an evidence-free row, or a surviving `unmet` row sends the PR back to the original implementer; the review was incomplete, not passed.
+- **A `needs manual` row routes to you** (a UI/native observation a sub-agent cannot drive): run the stated manual check yourself or require a precise recorded result, and record it on the checklist before Gate — an unperformed check or a unit test is not a substitute.
+- **Every companion-artifact row has a Standards verdict** on whether its meaning is stale against the diff.
+- For a visually authored asset slice, the table carries the per-asset Style alignment / Identity continuity verdicts against the verified visual reference set; every `fail` or `unverified` row goes back. For a mechanical-only asset slice, it carries the pixel-equivalence verdict, and a visual difference reclassifies the slice as visually authored — send it back with the reference set.
+- **Spot-audit for depth.** Pull the full comment whenever Verify flagged anything — an out-of-manifest file, a thin test, a criterion whose seam the diff never touches — and on a sampled PR per wave regardless. A table reporting zero blocking findings on a diff Verify flagged means the review missed them; send it back naming what to look at. This is the check that a self-review was real, and it costs one comment read, not a diff.
+
+Run Review for every slice type; asset PRs still get Spec against the issue (Standards may be empty when the diff is mostly binaries).
 
 Treat findings as follows:
 
-- **Spec** findings (missing/partial, scope creep, wrong implementation, any `unmet` criterion row, any `fail`/`unverified` asset verdict row) → send back to the original implementer for rework; do not Gate.
-- **Standards** hard violations (documented repo-standard breaches) → same, rework.
+- Unreworked **Spec** findings (missing/partial, scope creep, wrong implementation, any `unmet` criterion row, any `fail`/`unverified` asset verdict row) → back to the original implementer; do not Gate.
+- Unreworked **Standards** hard violations (documented repo-standard breaches) → same, rework.
 - **Standards** judgement-call smells (Fowler baseline only) → include in the Gate summary for the user; do not block alone.
 
-Empty findings (or only judgement-call smells) → proceed to Gate. Re-run Review after any rework push before Gate.
+A complete table whose blocking rows are all reworked clear (or only judgement-call smells remain) → proceed to Gate. The implementer re-runs its own review after any rework push and posts a fresh comment; you re-audit the new table before Gate.
 
 ### 5. Gate
 
