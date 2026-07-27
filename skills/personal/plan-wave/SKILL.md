@@ -17,7 +17,7 @@ Spawn an Explore agent over the subsystems the wave touches: core interfaces and
 
 ### 2. Design
 
-Draft the wave: one slice per issue, and for each slice its deltas across every layer (types, engine/core, data, UI, save) plus its tests, and its **file manifest** — the exact paths it will `modify`, `create`, and `read` (context files an implementer reads before editing). Classify each slice up front:
+Draft the wave: one slice per issue, and for each slice its current → target deltas across every layer (types, engine/core, data, UI, save) plus its proof obligations, and its **file manifest** — the exact paths it will `modify`, `create`, and `read` (context files an implementer reads before editing). Give each manifest entry a stable symbol or heading anchor where one exists. Classify `read` entries as an `authority` (normative contract), `seam` (interface the change joins), or `pattern` (example to imitate). Classify each slice up front:
 
 - **code slice** — behavior, types, engine, UI wiring, content data, tests; no new original raster art as the primary deliverable
 - **asset slice** — new or replacement icons, sprites, backdrops, or other rasters that need image generation and the repo's asset pipeline
@@ -44,19 +44,21 @@ Run a `/grilling` session on the draft, using the `/domain-modeling` skill to ca
 
 ### 4. Spec
 
-Write each issue body: `## Slice type` / `## What to build` / `## Touches` / `## Acceptance criteria` / `## Blocked by`. This spec style is deliberately concrete (unlike `/to-tickets`, which avoids code in bodies — a wave issue is the implementing agent's only context):
+Write each issue body as an agent contract: `## Slice type` / `## Delta` / `## Contract` / `## Touches` / `## Proof` / optional `## Invariants` / `## Blocked by`. The implementing agent is the only reader. Optimize for cold-start execution, not human reassurance.
 
 - `## Slice type` is mandatory and machine-readable for `/orchestrate-wave`: a single line that is exactly `code` or exactly `asset`. No synonyms, no prose on that line.
-- `## Touches` is mandatory: the slice's file manifest, one line per file as `modify:` / `create:` / `read:` with an exact repo-relative path and a short why. Every `modify`/`read` path exists in the codebase at planning time (Ground verified it); `create` paths follow an existing directory convention; name a directory only when the whole directory is genuinely in scope. A nonexistent path is a spec bug, same as a wrong type name. The `read` lines are the implementer's context set — the files to read before editing, replacing open-ended exploration. The manifest is expected scope, not a straitjacket: state in-body that deviations are allowed but each out-of-manifest file must be justified in the PR body.
-- Exact type shapes and constants in fenced code blocks, ready to paste.
+- `## Delta` is mandatory: state the smallest useful current → target diff so the implementer opens files with a hypothesis instead of reconstructing the change through exploration. For a wholly new capability, use absent → target. Do not explain unchanged behavior here.
+- `## Contract` is the single source of truth for requirements. Give each claim a stable ID (`C1`, `C2`, or an existing evidence slug) and state it exactly once. Put exact type shapes, constants, and load-bearing pseudocode under the claim they define. When a manifest `authority` already states the behavior, cite its exact heading and record only this slice's additions or overrides. Retain procedural steps only when their order is observable behavior or a load-bearing implementation constraint.
+- `## Touches` is mandatory: the slice's file manifest, one line per file as `modify:` / `create:` / `read:` with an exact repo-relative path, a stable symbol or heading anchor where available, and a short purpose. Use `- modify: \`path\` :: anchor — delta`, `- create: \`path\` — purpose`, and `- read: [authority|seam|pattern] \`path\` :: anchor — question`. Every `modify`/`read` path exists in the codebase at planning time (Ground verified it); `create` paths follow an existing directory convention; name a directory only when the whole directory is genuinely in scope. A nonexistent path is a spec bug, same as a wrong type name. The `read` lines are the implementer's bounded context set, replacing open-ended exploration. End the section with one compact scope rule: the manifest is expected scope; justify each deviation in the PR body.
+- `## Proof` maps every Contract claim ID to its proving test, evidence slug, inspection, or command. Point to claims; never paraphrase them. Include the repository's required validation commands once here.
+- `## Invariants` is optional and contains only boundaries that would otherwise be easy to violate. State the preserved behavior positively, once, with the why only when it prevents a plausible wrong turn. Put append-only arrays, save-compat defaults, event-vocabulary rules, and tuning labels here rather than repeating them beside multiple claims.
 - An asset slice carries its **generation prompt**: the finished prompt text, written against the repo's prompt kit for that asset class, in a fenced block ready to paste into the generator — plus the intended read beside it (subject, composition, facing, palette/theme keys). The implementer runs the plan's prompt and judges the result against the stated read; authoring the prompt is planning work, not implementation work.
-- Ordering that matters spelled out (tick-branch order, click-handler dispatch order) as pseudocode.
-- Standing constraints restated in-body where they bind: append-only arrays, save-compat defaults, event-vocabulary rules — with the *why*, so the agent doesn't "improve" them away.
-- One acceptance criterion per pinned decision — each user answer from the grill becomes a checkable test.
-- Tuning values labeled as tuning, not spec.
-- `## Blocked by` carries the dispatch notes too: which issues this one must never run concurrently with, and why — name the shared manifest paths for file conflicts, prose for semantic conflicts (from step 2). The orchestrator reads issues, not this conversation — concurrency constraints that live only in the closing report are invisible at dispatch time.
+- Each pinned decision from the grill becomes one Contract claim with a Proof mapping.
+- `## Blocked by` is the only dependency declaration in the body. Use `blocked_by: [numbers]`, `never_concurrent: [numbers]`, `shared_writes: [paths]`, and `semantic_conflicts: [short reasons]`; omit empty keys. The orchestrator reads issues, not this conversation — concurrency constraints that live only in the closing report are invisible at dispatch time.
 
-Done when each body, reread cold as the implementing agent, has no open question — and no drafting residue: a sentence still arguing with itself is a decision that didn't get made.
+Run a compression audit on every body. Every sentence must serve Delta, Contract, Touches, Proof, Invariants, or Blocked by; delete anything that does not. Every Contract claim has Proof, every Proof entry names a claim, and no requirement, boundary, command, or dependency has more than one authoritative occurrence.
+
+Done when each body, reread cold as the implementing agent, has no open question, passes the compression audit, and contains no drafting residue: a sentence still arguing with itself is a decision that did not get made.
 
 ### 5. Publish
 
@@ -70,4 +72,4 @@ gh api repos/<owner>/<repo>/issues/<N>/dependencies/blocked_by -F issue_id=<bloc
 
 ### 6. Record
 
-Verify: issue list shows the wave with correct labels; every agent-ready issue has `## Slice type` as `code` or `asset` and a `## Touches` manifest whose `modify`/`read` paths exist in the tree; every asset issue has a fenced generation prompt; spot-check edges via the `dependencies/blocked_by` endpoint; `git status --porcelain` is empty (the tree was never touched). Close with a report the orchestrator can execute from: issue numbers and titles, each issue's slice type, the dependency graph, and a **dispatch order** — which issues are parallel-safe, which are strictly serialized (summarizing the in-body dispatch notes, which remain the source of truth).
+Verify: issue list shows the wave with correct labels; every agent-ready issue has `## Slice type` as `code` or `asset`, every required agent-contract section, complete Contract ↔ Proof mapping, and a `## Touches` manifest whose `modify`/`read` paths exist in the tree; every asset issue has a fenced generation prompt; spot-check edges via the `dependencies/blocked_by` endpoint; `git status --porcelain` is empty (the tree was never touched). Close with a report the orchestrator can execute from: issue numbers and titles, each issue's slice type, the dependency graph, and a **dispatch order** — which issues are parallel-safe, which are strictly serialized (summarizing the in-body dispatch notes, which remain the source of truth).

@@ -80,9 +80,10 @@ Each verdict names its references and cites concrete visual matches or mismatche
 
 Detect the host runtime once (Cursor vs Claude Code).
 
-Send a single message with two parallel sub-agent spawns on the general-purpose coding subagent (`generalPurpose` in Cursor; `general-purpose` in Claude Code).
+Send a single message with two parallel sub-agent spawns:
 
-On **Cursor**, pass `model: "composer-2.5[fast=false]"` on both spawns — never `composer-2.5-fast` or plain `composer-2.5` (the backend may upgrade to fast).
+- **Cursor:** `code-review-standards` and `code-review-spec` (`.cursor/agents/code-review-standards.md`, `.cursor/agents/code-review-spec.md`). Model is pinned in each subagent's frontmatter — do not pass `model` on the Task call and do not fall back to `generalPurpose`.
+- **Claude Code:** `general-purpose` with the model pin from `.claude/CLAUDE.md` when present.
 
 **Standards sub-agent prompt** — include:
 
