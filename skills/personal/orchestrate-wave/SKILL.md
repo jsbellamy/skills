@@ -12,16 +12,20 @@ Drive a **wave** of agent-ready GitHub issues from open to merged. You are the o
 
 Cursor sandboxes shell commands by default. Every `gh` call (`gh run list`, `gh issue view`, `gh pr checks`, `gh pr merge`, etc.) must request elevated permissions or it will fail with `Forbidden` — the sandbox cannot read the keyring token. Use `full_network` for read-only GitHub API calls; use `all` for merge, push, and other writes that need keyring-backed auth.
 
-## Slice type → model
+## Slice type
 
-Every wave issue must declare **`## Slice type`** with exactly one of `code` or `asset`. Detect the host runtime once (Cursor vs Claude Code) and pin implementers from this table — never cross-wire models across runtimes:
+Every wave issue must declare **`## Slice type`** with exactly one of `code` or `asset`. Never invent a slice type: if `## Slice type` is missing or not exactly `code` / `asset`, stop and ask — do not dispatch.
 
-| Slice | Cursor | Claude Code |
-| ----- | ------ | ----------- |
-| **code slice** (`code`) | Composer 2.5 (`composer-2.5`, never fast) | Sonnet (`sonnet`, reasoning ≤ high) |
-| **asset slice** (`asset`) | Grok 4.5 medium (`cursor-grok-4.5-medium`) | Grok 4.5 medium if available; otherwise ask before dispatching |
+On **Cursor**, spawn `issue-implementer-code` or `issue-implementer-asset` by slice type — model pins live in each agent's `.cursor/agents/*.md` frontmatter; do not pass a model override in the dispatch Task.
 
-Asset implementers must have image generation and follow the repo's asset pipeline when one exists. For visually authored output, they receive a visual reference set and preserve the original sample's identity while matching the existing cohort's style. Never spawn Fable or above. Never invent a slice type: if `## Slice type` is missing or not exactly `code` / `asset`, stop and ask — do not dispatch.
+On **Claude Code**, spawn `claude` and pin the model from this table — never cross-wire models across runtimes:
+
+| Slice | Model |
+| ----- | ----- |
+| **code slice** (`code`) | Sonnet (`sonnet`, reasoning ≤ high) |
+| **asset slice** (`asset`) | Grok 4.5 medium if available; otherwise ask before dispatching |
+
+Asset implementers must have image generation and follow the repo's asset pipeline when one exists. For visually authored output, they receive a visual reference set and preserve the original sample's identity while matching the existing cohort's style. Never spawn Fable or above.
 
 ## Loop
 
@@ -39,9 +43,9 @@ git worktree add --detach ../<repo-basename>-wt-<N> main
 cd ../<repo-basename>-wt-<N> && npm install
 ```
 
-Spawn a background implementer on the runtime's general-purpose coding subagent (`generalPurpose` in Cursor; `claude` in Claude Code). Pin the model from the runtime × slice table above. For `asset`, require image generation for new rasters.
+Spawn a background implementer by slice type. On **Cursor**, use `issue-implementer-code` or `issue-implementer-asset` (repo `.cursor/agents/issue-implementer-code.md` and `issue-implementer-asset.md`); model and slice workflow are preloaded there — do not inline the implementer process or pass a model override. On **Claude Code**, use `claude` and pin the model from the table above; inline `docs/agents/issue-implementer.md` when no runtime-specific agent exists.
 
-Custom agent types from `.claude/agents/` only register at session start — inline the implementer process into the prompt instead (source it from the repo's `.claude/agents/issue-implementer.md` if present). The prompt must pin: the worktree path as the only working directory; fetch the issue with `gh issue view <N>` and treat its completion claims as the definition of done and their Proof mappings as required evidence; read every `## Touches` `read` anchor before editing, treating `authority` as normative, `seam` as the interface to join, and `pattern` as an example, and expand beyond an anchor only when required; treat the manifest as expected scope, verify its paths against the current tree first (a sibling merge may have moved them), and justify any out-of-manifest file in the PR body; branch `issue-<N>-<slug>`; test-first; hooks must pass (never `--no-verify`); run `/code-review` on its own branch before publishing and rework every Spec finding, `unmet` completion-claim row, and hard Standards violation; push and open a PR with `Closes #<N>`; post the verbatim Standards and Spec output as a PR comment and return a verdict table rather than the reports themselves — pasting what the reviewers wrote, never a summary of its own review; never merge. On Cursor, its review subagents must run Composer 2.5 non-fast (`composer-2.5[fast=false]`) whatever the slice type; on Claude Code, the general-purpose subagent the `code-review` skill names. Require the implementer to read the repo's instruction files and their applicable references before editing, build a companion-artifact checklist for required documentation, indexes, manifests, generated files, changelogs, and other synchronized surfaces, complete it before opening the PR, and include concrete evidence for every row in the PR body and final report. For a visually authored asset slice, the prompt also names the visual reference set and requires the final report to identify the original sample, style cohort, and concrete identity/style choices preserved in the delivered asset. For a mechanical-only asset slice, require rendered-pixel-equivalence evidence instead. The live issue body is authoritative. If a sibling issue already merged into a shared surface this one also touches (a UI panel, a module), say so explicitly — the issue text's description of that surface may predate the merge; the current file state is authoritative there, not the issue body.
+The dispatch **envelope** (parent prompt) carries only what the preloaded agent cannot know: absolute worktree path as the only working directory; issue number; wave context — especially sibling merges that changed a shared surface this issue also touches (current file state beats stale issue text there). For a visually authored asset slice, name the visual reference set (original sample plus cohort peers). Do not cherry-pick implementer steps into the envelope — `docs/agents/issue-implementer.md` is the single process source.
 
 ### 3. Verify
 
@@ -110,7 +114,7 @@ If the worktree removal step above was skipped and `--delete-branch` fails namin
 
 - `main` broken: fix via a branch and PR through CI, never a direct push to `main`.
 - PR needs rework (failed checks, out-of-scope files, Spec / hard-Standards review findings, semantic conflict after a rebase): resume the **original** implementer via SendMessage with specific instructions — it has the context; a fresh agent starts cold. Force-pushes you explicitly directed after a rebase are expected; any other force-push is a stop-and-look.
-- Implementer killed or interrupted before opening a PR (session compaction, a stop request): its process is gone, so SendMessage can't resume it — but its worktree may hold uncommitted work. Don't discard it. Dispatch a fresh subagent pointed at the same worktree and branch, telling it what's already there and to verify it (re-read the diff, rerun tests) before continuing, rather than restarting cold. Keep the same slice-type model pin as the original dispatch.
+- Implementer killed or interrupted before opening a PR (session compaction, a stop request): its process is gone, so SendMessage can't resume it — but its worktree may hold uncommitted work. Don't discard it. Dispatch a fresh implementer of the **same slice type** (`issue-implementer-code` or `issue-implementer-asset` on Cursor) pointed at the same worktree and branch, telling it what's already there and to verify it (re-read the diff, rerun tests) before continuing, rather than restarting cold.
 - Semantic test conflict from a merged sibling: prefer a locally-tuned test fixture in the affected PR over editing shared fixtures.
 
 ### 8. Advance
