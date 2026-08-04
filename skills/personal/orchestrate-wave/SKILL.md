@@ -16,16 +16,7 @@ Cursor sandboxes shell commands by default. Every `gh` call (`gh run list`, `gh 
 
 Every wave issue must declare **`## Slice type`** with exactly one of `code` or `asset`. Never invent a slice type: if `## Slice type` is missing or not exactly `code` / `asset`, stop and ask — do not dispatch.
 
-On **Cursor**, spawn `issue-implementer-code` or `issue-implementer-asset` by slice type — model pins live in each agent's `.cursor/agents/*.md` frontmatter; do not pass a model override in the dispatch Task.
-
-On **Claude Code**, spawn `claude` and pin the model from this table — never cross-wire models across runtimes:
-
-| Slice | Model |
-| ----- | ----- |
-| **code slice** (`code`) | Sonnet (`sonnet`, reasoning ≤ high) |
-| **asset slice** (`asset`) | Grok 4.5 medium if available; otherwise ask before dispatching |
-
-Asset implementers must have image generation and follow the repo's asset pipeline when one exists. For visually authored output, they receive a visual reference set and preserve the original sample's identity while matching the existing cohort's style. Never spawn Fable or above.
+Asset implementers must have image generation and follow the repo's asset pipeline when one exists. For visually authored output, they receive a visual reference set and preserve the original sample's identity while matching the existing cohort's style.
 
 ## Loop
 
@@ -43,7 +34,7 @@ git worktree add --detach ../<repo-basename>-wt-<N> main
 cd ../<repo-basename>-wt-<N> && npm install
 ```
 
-Spawn a background implementer by slice type. On **Cursor**, use `issue-implementer-code` or `issue-implementer-asset` (repo `.cursor/agents/issue-implementer-code.md` and `issue-implementer-asset.md`); model and slice workflow are preloaded there — do not inline the implementer process or pass a model override. On **Claude Code**, use `claude` and pin the model from the table above; inline `docs/agents/issue-implementer.md` when no runtime-specific agent exists.
+Spawn a background implementer by slice type. On **Cursor**, spawn from `.cursor/agents/issue-implementer-code.md` or `.cursor/agents/issue-implementer-asset.md` by `## Slice type`. On **Claude Code**, inline `docs/agents/issue-implementer.md`. Do not inline the implementer process into the envelope.
 
 The dispatch **envelope** (parent prompt) carries only what the preloaded agent cannot know: absolute worktree path as the only working directory; issue number; wave context — especially sibling merges that changed a shared surface this issue also touches (current file state beats stale issue text there). For a visually authored asset slice, name the visual reference set (original sample plus cohort peers). Do not cherry-pick implementer steps into the envelope — `docs/agents/issue-implementer.md` is the single process source.
 
@@ -114,7 +105,7 @@ If the worktree removal step above was skipped and `--delete-branch` fails namin
 
 - `main` broken: fix via a branch and PR through CI, never a direct push to `main`.
 - PR needs rework (failed checks, out-of-scope files, Spec / hard-Standards review findings, semantic conflict after a rebase): resume the **original** implementer via SendMessage with specific instructions — it has the context; a fresh agent starts cold. Force-pushes you explicitly directed after a rebase are expected; any other force-push is a stop-and-look.
-- Implementer killed or interrupted before opening a PR (session compaction, a stop request): its process is gone, so SendMessage can't resume it — but its worktree may hold uncommitted work. Don't discard it. Dispatch a fresh implementer of the **same slice type** (`issue-implementer-code` or `issue-implementer-asset` on Cursor) pointed at the same worktree and branch, telling it what's already there and to verify it (re-read the diff, rerun tests) before continuing, rather than restarting cold.
+- Implementer killed or interrupted before opening a PR (session compaction, a stop request): its process is gone, so SendMessage can't resume it — but its worktree may hold uncommitted work. Don't discard it. Spawn a fresh implementer from the same `.cursor/agents/issue-implementer-*.md` pointed at the same worktree and branch, telling it what's already there and to verify it (re-read the diff, rerun tests) before continuing, rather than restarting cold.
 - Semantic test conflict from a merged sibling: prefer a locally-tuned test fixture in the affected PR over editing shared fixtures.
 
 ### 8. Advance

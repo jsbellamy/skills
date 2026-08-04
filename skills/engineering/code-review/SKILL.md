@@ -82,8 +82,10 @@ Detect the host runtime once (Cursor vs Claude Code).
 
 Send a single message with two parallel sub-agent spawns:
 
-- **Cursor:** `code-review-standards` and `code-review-spec` (`.cursor/agents/code-review-standards.md`, `.cursor/agents/code-review-spec.md`). Model is pinned in each subagent's frontmatter — do not pass `model` on the Task call and do not fall back to `generalPurpose`.
-- **Claude Code:** `general-purpose` with the model pin from `.claude/CLAUDE.md` when present.
+- **Cursor:** spawn `code-review-standards` and `code-review-spec` from
+  `.cursor/agents/code-review-standards.md` and `.cursor/agents/code-review-spec.md`
+  in parallel.
+- **Claude Code:** run equivalent review prompts per `.claude/CLAUDE.md`.
 
 **Standards sub-agent prompt** — include:
 
