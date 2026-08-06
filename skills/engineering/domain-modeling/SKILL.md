@@ -39,6 +39,20 @@ If a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts. The ma
 
 Create files lazily — only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If no `docs/adr/` exists, create it when the first ADR is needed.
 
+When `docs/agents/domain.md` exists, read it first for repo-specific authority paths.
+
+## Authority routing
+
+Route each crystallised pin to one **authority** file — the destination the next cold-start agent reads. Capture inline; don't batch pins for end of session.
+
+| Pin | Destination |
+| --- | --- |
+| Canonical term or concept boundary | `CONTEXT.md` |
+| Locked product or tech choice (behavior, scope, feel, stack) | `docs/DECISIONS.md` when the repo ships one |
+| Trade-off with genuine alternatives | `docs/adr/` — only when all three criteria under **Offer ADRs sparingly** are met |
+
+Wave-scoped constants belong in the issue `## Contract`, not an authority file. Done when every resolved pin is written to its row's destination (or an ADR was offered and declined).
+
 ## During the session
 
 ### Challenge against the glossary

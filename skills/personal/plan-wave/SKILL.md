@@ -5,7 +5,7 @@ description: Plan a wave of features and file them as fully-specified, agent-rea
 
 # Plan a Wave
 
-Turn a feature request into a **wave**: a batch of GitHub issues so fully specified that an implementation agent can pick each one up cold — no conversation context, no follow-up questions. The wave ends filed, not built: this skill writes only to the issue tracker, never to the working tree, so an `/orchestrate-wave` session can run concurrently on the same repo without collision.
+Turn a feature request into a **wave**: a batch of GitHub issues so fully specified that an implementation agent can pick each one up cold — no conversation context, no follow-up questions. The wave ends filed, not built: this skill writes only to the issue tracker, never to the working tree — except **authority** capture during Grill via `/domain-modeling` — so an `/orchestrate-wave` session can run concurrently on the same repo without collision.
 
 Subagent policy for *this* planning session: Sonnet with reasoning effort **≤ high** — state "do not exceed high reasoning effort" in each prompt. Never spawn a subagent on Fable or above. (Implementer model pins live on each issue's **slice type**; `/orchestrate-wave` reads them at dispatch.)
 
@@ -13,7 +13,7 @@ Subagent policy for *this* planning session: Sonnet with reasoning effort **≤ 
 
 ### 1. Ground
 
-Spawn an Explore agent over the subsystems the wave touches: core interfaces and types, data/content shapes, UI structure, save/persistence format, test patterns, and any ADRs or domain glossary. You need facts the specs will stand on — exact type names, function signatures, established conventions (append-only arrays, tolerant-load defaults, event vocabularies), and exact file paths. Done when you can write a spec snippet and its file manifest without guessing a name or a path.
+Spawn an Explore agent over the subsystems the wave touches: core interfaces and types, data/content shapes, UI structure, save/persistence format, test patterns, and the repo's **authority** corpus (`CONTEXT.md`, `docs/DECISIONS.md` when present, `docs/adr/`, `docs/agents/domain.md` when present). You need facts the specs will stand on — exact type names, function signatures, established conventions (append-only arrays, tolerant-load defaults, event vocabularies), and exact file paths. Done when you can write a spec snippet and its file manifest without guessing a name or a path.
 
 ### 2. Design
 
@@ -26,7 +26,7 @@ Prefer splitting mixed work into two issues (code blocked by asset, or the rever
 
 - **Shared-file conflicts** — intersect the slices' manifest write sets (`modify` + `create`); the manifests are the single source of truth for what each slice touches.
 - **Semantic conflicts** — slices that collide through behavior even with disjoint files (one slice's mechanic changes another's test conditions, shared fixtures, event timing).
-- **Open decisions** — every choice the design doesn't force.
+- **Open decisions** — every choice the design doesn't force and no **authority** already pins.
 
 When a slice can't be behavior-complete on its own, give it a neutral **interim** — equivalent to today's behavior, labeled interim in the body — that a named later slice explicitly replaces. Every slice merges green and the replacement seam is planned, not discovered.
 
@@ -40,7 +40,7 @@ Use a Plan agent for a large wave; design inline for a small one. Done when ever
 
 ### 3. Grill
 
-Run a `/grilling` session on the draft, using the `/domain-modeling` skill to capture docs (ADRs and glossary) as you go. Facts get looked up in the codebase; decisions go to the user one at a time, each with your recommended answer. A slice sitting near the size ceiling is a decision: present the candidate seams with your recommended split (or the case for keeping it whole). The user's answers are final — record their exact words where wording matters (pricing formulas, thresholds, behavioral rules). Done when the user confirms shared understanding, and only then.
+Run a `/grilling` session on **open decisions** only. Facts and pins already in the **authority** corpus are lookup during Ground and Spec — cite them, don't re-ask. Route each new pin through `/domain-modeling` **authority routing** as it crystallises. Decisions go to the user one at a time, each with your recommended answer. A slice sitting near the size ceiling is a decision: present the candidate seams with your recommended split (or the case for keeping it whole). The user's answers are final — record their exact words where wording matters (pricing formulas, thresholds, behavioral rules). Done when the user confirms shared understanding and every grill pin is either in an authority file or scoped to this wave's issue `## Contract` claims only.
 
 ### 4. Spec
 
