@@ -20,6 +20,11 @@ Asset implementers must have image generation and follow the repo's asset pipeli
 
 ## Loop
 
+Keep one ledger row per issue: issue number, slice type, write set, base SHA,
+worktree, branch, implementer type and ID, state, PR number, and PR head SHA.
+States advance only through `ready` → `running` → `returned` → `verified` →
+`review-clear` → `approved` → `merging` → `merged` → `settled`.
+
 ### 1. Preflight
 
 Dispatch is the last point where a manifest can be repaired cheaply, so every gate below clears before any implementer goes out.
@@ -31,6 +36,8 @@ Dispatch is the last point where a manifest can be repaired cheaply, so every ga
 - **Asset readiness.** Classify each asset slice as visually authored or mechanical-only from the issue: a mechanical-only slice must prove rendered-pixel equivalence; any intended visual delta makes it visually authored. For every visually authored slice, build the visual reference set before dispatch — the issue's original sample plus two to five closest existing assets from the same family, atlas, role, or rendered context; when fewer than two peers exist, use every available peer and say so. If the original sample is unavailable, or no existing asset can establish the requested style, stop and ask rather than dispatching an identity- or style-blind generation.
 - **Parallel-safety.** An issue is **parallel-safe** only when it is both file-disjoint *and* semantically disjoint from everything in flight. Compute file-disjointness mechanically: intersect the issues' `## Touches` write sets (`modify` + `create`) — any overlap is a conflict. Semantic disjointness still needs judgment — slices can collide through shared fixtures, test conditions, or event timing even when their manifests never overlap. Writers of the same core file are strictly serial. When in doubt, serialize.
 
+Record every issue that clears Preflight as `ready`.
+
 ### 2. Dispatch
 
 For each issue going out, from the current tip of `main`. **`cd <repo>` first** — worktree paths are relative to repo root, not the shell's starting cwd (a bare `sidescape-wt-<N>` from `.vscode/` lands in `.vscode/`). Each worktree is a **sibling** of the repo: `../<repo-basename>-wt-<N>` (for `sidescape` #341 → `../sidescape-wt-341` beside the repo).
@@ -41,11 +48,40 @@ git worktree add --detach ../<repo-basename>-wt-<N> main
 cd ../<repo-basename>-wt-<N> && npm install
 ```
 
-Spawn a background implementer by slice type. On **Cursor**, spawn from `.cursor/agents/issue-implementer-code.md` or `.cursor/agents/issue-implementer-asset.md` by `## Slice type`. On **Claude Code**, inline `docs/agents/issue-implementer.md`. Do not inline the implementer process into the envelope.
+Spawn a background implementer by slice type. On **Cursor**, the binding is
+exact: `code` → `subagent_type: issue-implementer-code`; `asset` →
+`subagent_type: issue-implementer-asset`; set `run_in_background: true`.
+Omitting or substituting the type — including `generalPurpose` — is a failed
+dispatch. Dispatch every parallel-ready issue together in one response, one
+subagent call per issue. On **Claude Code**, inline
+`docs/agents/issue-implementer.md`. Do not inline the implementer process into
+the envelope.
 
 The dispatch **envelope** (parent prompt) carries only what the preloaded agent cannot know: absolute worktree path as the only working directory; issue number; wave context — especially sibling merges that changed a shared surface this issue also touches (current file state beats stale issue text there). For a visually authored asset slice, name the visual reference set (original sample plus cohort peers). Do not cherry-pick implementer steps into the envelope — `docs/agents/issue-implementer.md` is the single process source.
 
-### 3. Verify
+Record each returned implementer ID and mark the issue `running` before doing
+other work. Dispatch is complete when every selected issue has the exact worker
+type, an ID, and a `running` ledger row.
+
+### 3. Running
+
+A background implementer remains `running` until the agent runtime reports
+`completed`, `failed`, `cancelled`, or `interrupted`. Silence, elapsed time,
+files appearing, commits, a pushed branch, or a missing/present PR are progress
+signals, not terminal evidence.
+
+On Cursor, end the turn and rely on the background completion notification.
+Do not await or poll the subagent, its transcript, its worktree, or GitHub to
+infer completion. Do not resume, replace, remove the worktree, or begin Verify
+while its ledger state is `running`; the implementer may still be writing.
+
+On terminal success, capture the final report and mark the issue `returned`.
+On an explicit terminal failure, cancellation, or interruption, enter the
+matching Break glass branch. Running is complete for an issue only when that
+implementer has an authoritative terminal state recorded; returned siblings
+may advance while other parallel workers remain `running`.
+
+### 4. Verify
 
 When an implementer reports back: `gh pr checks <N>` green; `gh pr view <N> --json mergeable,mergeStateStatus,files` — the file set must match the issue's `## Touches` write set (`modify` + `create`). Chase any out-of-manifest file down to its PR-body justification and its diff before accepting (a required-field update to an existing test literal is fine; core changes in a content-only issue are not). When the same *kind* of file keeps arriving out of manifest across a wave — a CLI module beside the library it wraps, a CLI test beside a library test — accept the PR on its justification but treat the pattern as a planning defect: fix the remaining issues' manifests before dispatching them, rather than paying the same rediscovery once per slice. An implementer claiming success is a claim; the checks are the verification.
 
@@ -64,7 +100,10 @@ Audit the implementer's companion-artifact checklist the same way — rows prese
 
 For an asset slice, confirm the referenced artifacts exist and are reachable: the changed asset, original sample, and every selected style-cohort member for a visually authored slice; the rendered-pixel-equivalence evidence for a mechanical-only slice. Anything inaccessible sends the PR back before Review; a legitimately small cohort is not a missing reference. The visual judgment itself happens in Review — the review agent needs the actual pixels, not a prose claim about them.
 
-### 4. Review
+When every Verify audit above passes, record the current PR head SHA and mark
+the issue `verified`.
+
+### 5. Review
 
 The **implementer** runs `/code-review` on its own branch before opening the PR, reworks its findings, and posts the verbatim reports as a **PR comment** — the deep read happens there, inside the worktree where the context is already hot, and rework lands before the PR ever reaches you. What the implementer returns to this session is a **verdict table**, not the reports.
 
@@ -88,29 +127,53 @@ A complete table whose blocking rows are all reworked clear (or only judgement-c
 
 Count the rework rounds per PR. When the same finding survives a second send-back, the Contract is ambiguous rather than the implementation wrong: stop dispatching rework and bring the user the finding plus both attempts, since a third round spends a fresh implementer context re-deriving a question only the issue text can answer.
 
-### 5. Gate
+When the complete table is clear and every required manual result is recorded,
+mark the issue `review-clear`.
+
+### 6. Gate
 
 Merges need user approval. Ask per-PR, or accept a blanket "merge as they go green" for the wave — but a blanket approval covers merging only after Review is complete with every completion-claim row `met` (or its `needs manual` check recorded), not fixes to `main` or scope deviations, which go back to the user. Surface any judgement-call Standards smells in the approval ask. Never merge a PR whose `Closes #<N>` reference would close an issue with an unmet or unverified completion claim, or with unresolved Spec / hard-Standards review findings.
 
-### 6. Merge
+Treat "merge when CI is green" and equivalent wording as blanket approval only;
+it satisfies `approved`, not the other merge gates.
 
-Remove the issue's worktree *before* merging — verification and review are already done by this point, so the worktree is no longer needed, and `--delete-branch` cannot delete a branch that's still checked out somewhere:
+When approval exists for a `review-clear` issue, mark it `approved`.
+
+### 7. Merge
+
+An issue is **merge-ready** only when all of these are recorded in its ledger:
+
+- implementer terminal success;
+- PR number and current head SHA;
+- CI green for that exact head SHA;
+- GitHub reports the PR mergeable;
+- Verify complete;
+- Review clear, including every required manual result;
+- user approval, per-PR or blanket.
+
+Re-fetch the PR head SHA, checks, and mergeability immediately before merging;
+if the head changed, return to Verify. CI green alone is never merge-ready.
+Mark the issue `merging` only after this final predicate passes.
+
+Squash-merge from inside the repo without deleting the checked-out branch, then
+confirm GitHub reports `state: MERGED`:
 
 ```
-cd <repo> && git worktree remove ../<repo-basename>-wt-<N>
+cd <repo> && gh pr merge <N> --squash
 ```
 
-Then squash-merge **from inside the repo directory in a single command** — the shell cwd resets between calls, and `gh pr merge` from elsewhere can silently no-op:
+After merge confirmation, mark the issue `merged`, remove the terminal implementer's worktree, and
+delete its local branch; delete the remote branch if the repository did not do
+so automatically. A merge failure leaves the worktree intact for recovery.
 
-```
-cd <repo> && gh pr merge <N> --squash --delete-branch
-```
+Then pull `main`, run the full suite locally, and wait for the **post-merge CI
+run on `main` for that merge SHA** to pass before dispatching dependent work.
+Independent siblings already running from the approved base may finish. Two
+individually-green PRs can auto-merge into a broken `main` — git happily
+combines non-overlapping hunks into duplicate code with no conflict. Mark the
+issue `settled` only after both local and post-merge checks pass.
 
-Confirm `state: MERGED` afterwards, then pull `main`, run the full suite locally, and wait for the **post-merge CI run on `main`** to pass before dispatching anything on top. Two individually-green PRs can auto-merge into a broken `main` — git happily combines non-overlapping hunks into duplicate code with no conflict.
-
-If the worktree removal step above was skipped and `--delete-branch` fails naming the worktree, that's benign (the remote branch is still gone) — just remove the worktree and `git branch -D` the local ref afterward.
-
-### 7. Break glass
+### 8. Break glass
 
 - `main` broken: fix via a branch and PR through CI, never a direct push to `main`.
 - PR needs rework (failed checks, out-of-scope files, Spec / hard-Standards review findings, semantic conflict after a rebase): resume the **original** implementer via SendMessage with specific instructions — it has the context; a fresh agent starts cold. Force-pushes you explicitly directed after a rebase are expected; any other force-push is a stop-and-look.
@@ -118,6 +181,6 @@ If the worktree removal step above was skipped and `--delete-branch` fails namin
 - Implementer returns **blocked** (an anchor that resolves to nothing, an open predecessor, a `needs manual` observation nobody can perform) or opens a `Diagnostic:` draft PR: the defect is in the spec, so route the named blocker to `/plan-wave` for repair, leave the issue open, remove its worktree, and carry it as **deferred** in Advance. A `Diagnostic:` draft PR stays open and unmerged; it never carries `Closes #<N>`.
 - Semantic test conflict from a merged sibling: prefer a locally-tuned test fixture in the affected PR over editing shared fixtures.
 
-### 8. Advance
+### 9. Advance
 
 After each merge, re-check the edges: dispatch newly-unblocked issues from the updated `main` (fresh worktrees — never reuse one across issues). Loop until every wave issue is closed or deferred, then report: merged PRs with issue numbers and slice types, final test count on `main`, deferred issues with the blocker each is waiting on, anything skipped or deviated, and the remaining queue. Close with `git worktree list` empty of wave worktrees.
