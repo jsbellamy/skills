@@ -7,13 +7,13 @@ description: Plan a wave of features and file them as fully-specified, agent-rea
 
 Turn a feature request into a **wave**: a batch of GitHub issues so fully specified that an implementation agent can pick each one up cold — no conversation context, no follow-up questions. The wave ends filed, not built: this skill writes only to the issue tracker, never to the working tree — except **authority** capture during Grill via `/domain-modeling` — so an `/orchestrate-wave` session can run concurrently on the same repo without collision.
 
-Subagent policy for *this* planning session: Sonnet with reasoning effort **≤ high** — state "do not exceed high reasoning effort" in each prompt. Never spawn a subagent on Fable or above. (Implementer model pins live on each issue's **slice type**; `/orchestrate-wave` reads them at dispatch.)
+Subagent policy for *this* planning session: spend model capability where a phase's errors are **silent**. Ground's facts are re-resolved mechanically in §6 and again by the implementer, so a wrong name or path surfaces before any code exists — run Ground agents cheap and fast. Design's slice boundaries, sizing, and conflict map meet no downstream check and propagate into every issue in the wave, so run its Plan agent at the strongest model and highest effort available. (Implementer model pins live on each issue's **slice type**; `/orchestrate-wave` reads them at dispatch.)
 
 ## Process
 
 ### 1. Ground
 
-Spawn an Explore agent over the subsystems the wave touches: core interfaces and types, data/content shapes, UI structure, save/persistence format, test patterns, and the repo's **authority** corpus (`CONTEXT.md`, `docs/DECISIONS.md` when present, `docs/adr/`, `docs/agents/domain.md` when present). You need facts the specs will stand on — exact type names, function signatures, established conventions (append-only arrays, tolerant-load defaults, event vocabularies), and exact file paths. Done when you can write a spec snippet and its file manifest without guessing a name or a path.
+Spawn Explore agents in parallel, one per target, each carrying a single named target rather than the whole sweep: core interfaces and types; data/content shapes; UI structure; save/persistence format; test patterns; the repo's **authority** corpus (`CONTEXT.md`, `docs/DECISIONS.md` when present, `docs/adr/`, `docs/agents/domain.md` when present); and the **companions** (§4) of every entry point the wave looks likely to change. Ground fails by omission rather than by error — a wrong name is caught twice downstream, while a companion nobody went looking for is invisible to §2's conflict map. One enumerated target per agent turns that recall problem into several precision ones. You need facts the specs will stand on — exact type names, function signatures, established conventions (append-only arrays, tolerant-load defaults, event vocabularies), and exact file paths. Done when you can write a spec snippet and its file manifest without guessing a name or a path.
 
 ### 2. Design
 
