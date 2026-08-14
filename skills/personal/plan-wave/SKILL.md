@@ -40,7 +40,7 @@ Use a Plan agent for a large wave; design inline for a small one. Done when ever
 
 ### 3. Grill
 
-Run a `/grilling` session on **open decisions** only. Facts and pins already in the **authority** corpus are lookup during Ground and Spec — cite them, don't re-ask. Route each new pin through `/domain-modeling` **authority routing** as it crystallises. Decisions go to the user one at a time, each with your recommended answer. A slice sitting near the size ceiling is a decision: present the candidate seams with your recommended split (or the case for keeping it whole). The user's answers are final — record their exact words where wording matters (pricing formulas, thresholds, behavioral rules). Done when the user confirms shared understanding and every grill pin is either in an authority file or scoped to this wave's issue `## Contract` claims only.
+Run `/grilling` on **open decisions** only. Facts and pins already in the **authority** corpus are lookup during Ground and Spec — cite them. Route each new pin through `/domain-modeling` **authority routing** as it crystallises. A slice sitting near the size ceiling is a decision: present the candidate seams with your recommended split (or the case for keeping it whole). The user's answers are final — record their exact words where wording matters (pricing formulas, thresholds, behavioral rules). Done when the user confirms shared understanding and every grill pin is either in an authority file or scoped to this wave's issue `## Contract` claims only.
 
 ### 4. Spec
 

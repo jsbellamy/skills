@@ -33,9 +33,9 @@ Done when the interpretation is concrete enough that `plan-wave` can design slic
 
 ## 3. Gate
 
-Present the interpretation before any issue is created. Ask for material decisions one at a time, leading with the recommended answer and its tradeoff. Revise the interpretation when an answer changes it.
+Present the interpretation before any issue is created. Run `/grilling` on the remaining material decisions — choices that change behavior, scope, cost, or risk — each carrying its recommended answer and tradeoff. Revise the interpretation when an answer changes it.
 
-The gate passes only after the user explicitly approves the complete interpretation and every material decision is settled. Preserve exact user wording for rules, thresholds, and other acceptance-defining choices.
+The gate passes only after the user explicitly approves the complete interpretation and `/grilling` reports shared understanding. Preserve exact user wording for rules, thresholds, and other acceptance-defining choices.
 
 ## 4. File the wave
 
