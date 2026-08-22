@@ -7,13 +7,13 @@ description: Plan a wave of features and file them as fully-specified, agent-rea
 
 Turn a feature request into a **wave**: a batch of GitHub issues so fully specified that an implementation agent can pick each one up cold — no conversation context, no follow-up questions. The wave ends filed, not built: this skill writes only to the issue tracker, never to the working tree — except **authority** capture during Grill via `/domain-modeling` — so an `/orchestrate-wave` session can run concurrently on the same repo without collision.
 
-Subagent policy for *this* planning session: spend model capability where a phase's errors are **silent**. Ground's facts are re-resolved mechanically in §6 and again by the implementer, so a wrong name or path surfaces before any code exists — run Ground agents cheap and fast. Design's slice boundaries, sizing, and conflict map meet no downstream check and propagate into every issue in the wave, so run its Plan agent at the strongest model and highest effort available. (Implementer model pins live on each issue's **slice type**; `/orchestrate-wave` reads them at dispatch.)
+Subagent policy for *this* planning session: spend model capability where a phase's errors are **silent**. Ground's facts are re-resolved mechanically in §7 and again by the implementer, so a wrong name or path surfaces before any code exists — run Ground agents cheap and fast. Design's slice boundaries, sizing, and conflict map meet no downstream check and propagate into every issue in the wave, so run its Plan agent at the strongest model and highest effort available. (Implementer model pins live on each issue's **slice type**; `/orchestrate-wave` reads them at dispatch.)
 
 ## Process
 
 ### 1. Ground
 
-Spawn Explore agents in parallel, one per target, each carrying a single named target rather than the whole sweep: core interfaces and types; data/content shapes; UI structure; save/persistence format; test patterns; the repo's **authority** corpus (`CONTEXT.md`, `docs/DECISIONS.md` when present, `docs/adr/`, `docs/agents/domain.md` when present); and the **companions** (§4) of every entry point the wave looks likely to change. Ground fails by omission rather than by error — a wrong name is caught twice downstream, while a companion nobody went looking for is invisible to §2's conflict map. One enumerated target per agent turns that recall problem into several precision ones. You need facts the specs will stand on — exact type names, function signatures, established conventions (append-only arrays, tolerant-load defaults, event vocabularies), and exact file paths. Done when you can write a spec snippet and its file manifest without guessing a name or a path.
+Spawn Explore agents in parallel, one per target, each carrying a single named target rather than the whole sweep: core interfaces and types; data/content shapes; UI structure; save/persistence format; test patterns; the repo's **authority** corpus (`CONTEXT.md`, `docs/DECISIONS.md` when present, `docs/adr/`, `docs/agents/domain.md` when present); and the **companions** (§5) of every entry point the wave looks likely to change. Ground fails by omission rather than by error — a wrong name is caught twice downstream, while a companion nobody went looking for is invisible to §2's conflict map. One enumerated target per agent turns that recall problem into several precision ones. You need facts the specs will stand on — exact type names, function signatures, established conventions (append-only arrays, tolerant-load defaults, event vocabularies), and exact file paths. Done when you can write a spec snippet and its file manifest without guessing a name or a path.
 
 ### 2. Design
 
@@ -30,19 +30,35 @@ Prefer splitting mixed work into two issues (code blocked by asset, or the rever
 
 When a slice can't be behavior-complete on its own, give it a neutral **interim** — equivalent to today's behavior, labeled interim in the body — that a named later slice explicitly replaces. Every slice merges green and the replacement seam is planned, not discovered.
 
-**Size every slice to a single fresh worker context window.** The manifest is the instrument: a write set past ~6–8 files, or a `read` set that won't hold to a tight named list, marks the slice oversized — split it before Spec, taking the first seam that fits. Size the `read` set by the lines its anchors resolve to, not by file count: anchoring three functions in a two-thousand-line module is a small read set, while naming that module bare is not. Past roughly a thousand resolved lines, the slice is carrying a subsystem rather than a seam.
+**Size every slice to a single fresh worker context window.** The manifest is the instrument: a write set past ~6–8 files, or a `read` set that won't hold to a tight named list, marks the slice oversized — carry it into §3, which decides between splitting it and deepening the module underneath it. Size the `read` set by the lines its anchors resolve to, not by file count: anchoring three functions in a two-thousand-line module is a small read set, while naming that module bare is not. Past roughly a thousand resolved lines, the slice is carrying a subsystem rather than a seam.
+
+When §3 returns *split*, take the first seam below that fits.
 
 1. **Interim seam** — the mechanism above: behavior-incomplete halves joined by a labeled interim.
 2. **Layer seam** — when the manifest partitions naturally (core + data first, UI wiring second); the later slice's `read` set names the earlier slice's merged files.
 3. **Expand–contract** — for a wide refactor whose blast radius fans across the codebase: an *expand* slice adds the new form beside the old; *migrate* slices convert call sites in batches sized by blast radius (each blocked by the expand); a *contract* slice deletes the old form, blocked by every migrate batch. Each merges green because the old form survives until contract.
 
-Use a Plan agent for a large wave; design inline for a small one. Done when every slice has a delta list, a slice type, a file manifest within the size ceiling, and every decision is named.
+Use a Plan agent for a large wave; design inline for a small one. Done when every slice has a delta list, a slice type, and a file manifest, every oversized manifest is flagged for §3, and every decision is named.
 
-### 3. Grill
+### 3. Depth
 
-Run `/grilling` on **open decisions** only. Facts and pins already in the **authority** corpus are lookup during Ground and Spec — cite them. Route each new pin through `/domain-modeling` **authority routing** as it crystallises. A slice sitting near the size ceiling is a decision: present the candidate seams with your recommended split (or the case for keeping it whole). The user's answers are final — record their exact words where wording matters (pricing formulas, thresholds, behavioral rules). Done when the user confirms shared understanding and every grill pin is either in an authority file or scoped to this wave's issue `## Contract` claims only.
+§2's ceiling detects an oversized manifest but not its cause, and the two causes want opposite responses. Work that is genuinely big should split. Small work spread thin because its module is **shallow** — interface nearly as complex as implementation — should not: splitting clones the wide `read` set into every resulting slice, so the wave routes around the shallowness and the next wave pays more. Run this step on every slice §2 flagged. Use `/codebase-design`'s vocabulary exactly — **deep**, **shallow**, **seam**, **leverage**, **locality** — and check the **authority** corpus (§1) before proposing a deepening it already settles.
 
-### 4. Spec
+Three signals, all read off manifests you already hold:
+
+- **Repeat manifest** — intersect write sets across this wave's slices, then against the `## Touches` sections of prior waves' issues (`gh issue list --state all --json number,body`). A file appearing in three or more slices across two waves is a shallow module announcing itself: it is the place every change is forced to visit.
+- **Companion fan-out** — §5's companion trace, run early on this slice's entry points. A trace that keeps dragging in a CLI, a handler, and their test modules is an interface leaking implementation.
+- **Deletion test** — for each `read: pattern` entry and each `modify` that is mostly wiring, ask whether deleting the file would concentrate complexity or merely move it. "Concentrates" is the signal.
+
+When a signal fires, draft a **deepening slice** and put it first in the wave: the expand–contract seam from §2, whose *migrate* slices are the ones that would otherwise have carried the wide `read` set. Carry the verdict into §4 as an open decision — split or deepen, with the repeat-manifest evidence — because the cost of guessing wrong lands on the user's next several waves.
+
+Look only at what this wave touches: deepening pays back on what changes next, and the wave is what changes next. A wider sweep is `/improve-codebase-architecture`'s job. Done when every slice §2 flagged carries a split-or-deepen verdict with its evidence.
+
+### 4. Grill
+
+Run `/grilling` on **open decisions** only. Facts and pins already in the **authority** corpus are lookup during Ground and Spec — cite them. Route each new pin through `/domain-modeling` **authority routing** as it crystallises. Each split-or-deepen verdict from §3 is an open decision: present it with its evidence and your recommendation. The user's answers are final — record their exact words where wording matters (pricing formulas, thresholds, behavioral rules). Done when the user confirms shared understanding and every grill pin is either in an authority file or scoped to this wave's issue `## Contract` claims only.
+
+### 5. Spec
 
 Write each issue body as an agent contract: `## Slice type` / `## Delta` / `## Contract` / `## Touches` / `## Proof` / optional `## Invariants` / `## Blocked by`. The implementing agent is the only reader. Optimize for cold-start execution, not human reassurance.
 
@@ -62,7 +78,7 @@ Run a compression audit on every body. Every sentence must serve Delta, Contract
 
 Done when each body, reread cold as the implementing agent, has no open question, passes the compression audit, and contains no drafting residue: a sentence still arguing with itself is a decision that did not get made.
 
-### 5. Publish
+### 6. Publish
 
 Create issues in dependency order (blockers first, so edges reference real numbers). Label agent-ready issues per the repo's triage vocabulary; leave deferred follow-ups unlabeled. Wire native blocking edges:
 
@@ -72,6 +88,6 @@ gh api repos/<owner>/<repo>/issues/<N>/dependencies/blocked_by -F issue_id=<bloc
 
 (The REST id comes from `gh api repos/<owner>/<repo>/issues/<M> -q .id`. The `-F` flag is load-bearing: `issue_id` must arrive as a typed integer — `-f` sends a string and the API 422s.) Then sweep existing open issues in both directions: rewrite bodies the wave's mechanics overtake, comment sequencing warnings on issues that now conflict with a slice, and when a wave decision pins tuning or intent on an *already-filed* issue, comment it there — a decision recorded only in conversation dies with the conversation.
 
-### 6. Record
+### 7. Record
 
 Verify: issue list shows the wave with correct labels; every agent-ready issue has `## Slice type` as `code` or `asset`, every required agent-contract section, complete Contract ↔ Proof mapping, and a `## Touches` manifest whose `modify`/`read` paths exist in the tree and whose named text anchors resolve — mechanically where the repo ships an anchor extractor (in Underline, `npm run agents:anchors -- --issue <N>`), by grepping each symbol and heading otherwise. The resolver must account explicitly for every unanchored `create` path, directory scope, and binary asset; an unresolved named text anchor sends the issue back to Design. Every asset issue has a fenced generation prompt; spot-check edges via the `dependencies/blocked_by` endpoint; `git status --porcelain` is empty (the tree was never touched). Close with a report the orchestrator can execute from: issue numbers and titles, each issue's slice type, the dependency graph, and a **dispatch order** — which issues are parallel-safe, which are strictly serialized (summarizing the in-body dispatch notes, which remain the source of truth).
