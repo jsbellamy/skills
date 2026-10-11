@@ -2,7 +2,7 @@
 
 The register is two layers: an **index** at `docs/DECISIONS.md` and one **living topic file** per subject under `docs/decisions/`. The index is what a cold-start agent reads first; a topic file is what it reads for the rules its task touches. Each topic's history sits apart, in a same-named **changelog** under `docs/decisions/changelog/`, which is audit history and on no read path. Nothing in the register is dated except a changelog.
 
-## Index — `docs/DECISIONS.md`
+## Index: `docs/DECISIONS.md`
 
 ```md
 # Decisions
@@ -22,7 +22,7 @@ Read this index, then only the topic files your task touches.
 
 One line per topic: the path, the topic name, and a clause naming what it covers so a reader can pick topics without opening them. Keep the index to one screen; if it will not fit, topics are too fine.
 
-## Topic file — `docs/decisions/<topic>.md`
+## Topic file: `docs/decisions/<topic>.md`
 
 ```md
 # Ordering
@@ -37,7 +37,7 @@ Rationale: `docs/adr/0003-one-payment-method-per-order.md`
 
 The topic ends at its body.
 
-## Changelog — `docs/decisions/changelog/<topic>.md`
+## Changelog: `docs/decisions/changelog/<topic>.md`
 
 ```md
 # Ordering — changelog
@@ -67,7 +67,7 @@ Rules for the changelog:
 
 ## Sizing
 
-A topic is the unit of ownership: it has its own git history and its own line in an issue's file manifest, so two waves touching different topics never share a write. That only holds while topics are cohesive. A topic every wave edits, or one past roughly a thousand words, is a shallow topic carrying several subjects — split it along the seam the edits keep crossing.
+A topic is the unit of ownership: it has its own git history and its own line in an issue's file manifest, so two waves touching different topics never share a write. That only holds while topics are cohesive. A topic every wave edits, or one past roughly a thousand words, is a shallow topic carrying several subjects. Split it along the seam the edits keep crossing.
 
 ## Converting a dated log
 
@@ -75,5 +75,5 @@ When a repo already keeps a single dated, append-only `docs/DECISIONS.md`:
 
 1. Group entries by subject and write each subject's current rule with supersession applied, reading every later entry's `Supersedes:` line against the earlier text.
 2. Distribute the log into the topics' changelogs: each entry's date, title, and `Rationale:` becomes one line in the changelog of every topic it built, newest first. This is where the why survives.
-3. Replace `docs/DECISIONS.md` with the index and delete the log. Git is the archive — the old wording is one `git log --follow` away and no agent greps it by accident. Do not park the log under `docs/history/`: a stale rule that a grep can land on mid-file reads as current, banner or not.
+3. Replace `docs/DECISIONS.md` with the index and delete the log. Git is the archive: the old wording is one `git log --follow` away and no agent greps it by accident. Do not park the log under `docs/history/`: a stale rule that a grep can land on mid-file reads as current, banner or not.
 4. Re-point every anchor that named a dated entry to the topic file.
