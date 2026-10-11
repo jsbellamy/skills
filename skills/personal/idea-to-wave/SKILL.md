@@ -9,7 +9,7 @@ Turn a high-level idea into a filed wave. Own product interpretation through app
 
 ## 1. Orient
 
-Read the repository instructions, domain language, product context, applicable decisions, nearby code, tests, and relevant open issues. Exercise the product when observed behavior is necessary to understand the idea. Keep this pass at product depth: establish current behavior, user impact, constraints, and the nearest implementation seams without drafting tickets.
+Read the repository instructions, domain language, product context, the decision register's index and the topics the idea touches, nearby code, tests, and relevant open issues. Exercise the product when observed behavior is necessary to understand the idea. Keep this pass at product depth: establish current behavior, user impact, constraints, and the nearest implementation seams without drafting tickets.
 
 For a broad idea, delegate bounded exploration of independent surfaces and synthesize the results yourself. Keep facts tied to repository or observed evidence.
 

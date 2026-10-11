@@ -13,8 +13,12 @@ Most repos have a single context:
 
 ```
 /
-├── CONTEXT.md
+├── CONTEXT.md                        ← glossary
 ├── docs/
+│   ├── DECISIONS.md                  ← index of the decision register
+│   ├── decisions/                    ← one living topic file per subject
+│   │   ├── ordering.md
+│   │   └── billing.md
 │   └── adr/
 │       ├── 0001-event-sourced-orders.md
 │       └── 0002-postgres-for-write-model.md
@@ -37,7 +41,7 @@ If a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts. The ma
 │       └── docs/adr/
 ```
 
-Create files lazily — only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If no `docs/adr/` exists, create it when the first ADR is needed.
+Create files lazily — only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If no `docs/DECISIONS.md` exists, create the index and the first topic file when the first product or tech choice is locked. If no `docs/adr/` exists, create it when the first ADR is needed.
 
 When `docs/agents/domain.md` exists, read it first for repo-specific authority paths.
 
@@ -48,7 +52,7 @@ Route each crystallised pin to one **authority** file — the destination the ne
 | Pin | Destination |
 | --- | --- |
 | Canonical term or concept boundary | `CONTEXT.md` |
-| Locked product or tech choice (behavior, scope, feel, stack) | `docs/DECISIONS.md` when the repo ships one |
+| Locked product or tech choice (behavior, scope, feel, stack) | The `docs/decisions/` topic file that the index `docs/DECISIONS.md` routes to; a new topic only when none fits. Format in [DECISIONS-FORMAT.md](./DECISIONS-FORMAT.md) |
 | Trade-off with genuine alternatives | `docs/adr/` — only when all three criteria under **Offer ADRs sparingly** are met |
 
 Wave-scoped constants belong in the issue `## Contract`, not an authority file. Done when every resolved pin is written to its row's destination (or an ADR was offered and declined).
@@ -76,6 +80,17 @@ When the user states how something works, check whether the code agrees. If you 
 When a term is resolved, update `CONTEXT.md` right there. Don't batch these up — capture them as they happen. Use the format in [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).
 
 `CONTEXT.md` should be totally devoid of implementation details. Do not treat `CONTEXT.md` as a spec, a scratch pad, or a repository for implementation decisions. It is a glossary and nothing else.
+
+### Keep the decision register live
+
+A locked choice is a rule that holds now, and the register is where the next cold-start agent reads it. Record it as a rule, not as an event:
+
+- **Edit in place.** Find the topic in `docs/DECISIONS.md`, open that file, and rewrite the rule so the body states the new choice once. Delete the wording it replaces — do not annotate it, date it, or write "supersedes" prose beside it. The body carries no dates.
+- **Log in the topic's changelog** — `docs/decisions/changelog/<topic>.md`, the same name as the topic; a new topic gets a new changelog. One line at the top: date, what changed, why in a sentence (or the ADR link). This is where the sequence and the reasoning live, in a file of its own, so reading a topic never loads its history. The changelog is audit history: nothing reads it to learn a rule, and no read path — a Contract, a manifest, a routing doc — names it.
+- **A rule that spans topics is one rule.** Put it under the topic whose seam it constrains and cross-reference from the others by file path; do not restate it.
+- **Split a shallow topic.** A topic every session edits, or one past roughly a thousand words, is carrying several subjects. Split it along the seam the edits keep crossing, add the index lines, and move the changelog entries with their rules into each new topic's changelog.
+
+Never keep a dated, append-only decisions log as the authority. It reads as current to whoever is anchored at one entry, later entries silently override earlier ones, and every reader has to rebuild the supersession graph in their head. When a repo has one, propose converting it: consolidate into topic files with supersession applied, distribute each entry's rationale into its topic's changelog, and delete the log — git is the archive.
 
 ### Offer ADRs sparingly
 
